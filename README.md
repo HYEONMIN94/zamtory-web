@@ -1,36 +1,77 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Zamtory Web
 
-## Getting Started
+Zamtory 프론트엔드 애플리케이션 - Next.js 15 (App Router)
 
-First, run the development server:
+> **백엔드**: 별도 저장소 [`zamtory-api`](https://github.com/HYEONMIN94/zamtory)에서 관리
+
+## 시작하기
+
+### 필수 요구사항
+
+- Node.js 20+
+- Yarn
+
+### 설치
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+yarn install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 개발 서버 실행
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+yarn dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+브라우저에서 http://localhost:3000 을 열어주세요.
 
-## Learn More
+### 프로덕션 빌드
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+# 빌드
+yarn build
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# 빌드된 앱 실행
+yarn start
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 기술 스택
 
-## Deploy on Vercel
+- **Next.js** 15.5 - React 프레임워크 (App Router)
+- **React** 19.1 - UI 라이브러리
+- **TypeScript** 5.x - 타입 안전성
+- **Tailwind CSS** 4.x - 유틸리티 기반 CSS
+- **ESLint** - 코드 품질 관리
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 프로젝트 구조
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/
+└── app/              # Next.js App Router 페이지
+    ├── layout.tsx    # 루트 레이아웃
+    ├── page.tsx      # 홈 페이지
+    └── globals.css   # 글로벌 스타일
+```
+
+## 환경 변수
+
+`.env.local` 파일에 환경 변수를 설정하세요:
+
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:3000
+```
+
+## 배포
+
+[Vercel](https://vercel.com)을 통한 배포를 권장합니다.
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new)
+
+## 개발 가이드
+
+자세한 개발 가이드는 [CLAUDE.md](./CLAUDE.md)를 참고하세요.
+
+## 추가 리소스
+
+- [Next.js 문서](https://nextjs.org/docs)
+- [Tailwind CSS 문서](https://tailwindcss.com/docs)
