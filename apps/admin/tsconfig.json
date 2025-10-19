@@ -1,0 +1,13 @@
+{
+  "extends": "@zamtory/config/typescript/nextjs.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"],
+      "@zamtory/ui": ["../../packages/ui/src"],
+      "@zamtory/types": ["../../packages/types/src"],
+      "@zamtory/utils": ["../../packages/utils/src"],
+      "@zamtory/api-client": ["../../packages/api-client/src"],
+      "@zamtory/webview-bridge": ["../../packages/webview-bridge/src"]
+    }
+  }
+}
