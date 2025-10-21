@@ -6,12 +6,7 @@
 import React, { useState } from 'react'
 import { Handle, Position, NodeProps } from '@xyflow/react'
 import { Modal, Input, Button } from '@zamtory/ui'
-
-interface ChoiceNodeData {
-  question: string
-  choices: string[]
-  onUpdate?: (updates: Record<string, unknown>) => void
-}
+import type { ChoiceNodeData } from '../../types/nodes'
 
 export function ChoiceNode({ data: rawData }: NodeProps) {
   const data = rawData as unknown as ChoiceNodeData

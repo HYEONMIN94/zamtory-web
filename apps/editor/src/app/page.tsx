@@ -105,7 +105,7 @@ export default function EditorPage() {
         },
       }))
     )
-  }, [updateNodeData, setNodes])
+  }, [updateNodeData])
 
   const addNode = (type: string) => {
     const id = `${nodeId}`

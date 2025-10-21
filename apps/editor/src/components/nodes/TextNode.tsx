@@ -5,12 +5,7 @@
 
 import React, { useState, useRef, useEffect } from 'react'
 import { Handle, Position, NodeProps } from '@xyflow/react'
-
-interface TextNodeData {
-  text: string
-  character?: string
-  onUpdate?: (updates: Record<string, unknown>) => void
-}
+import type { TextNodeData } from '../../types/nodes'
 
 export function TextNode({ data: rawData }: NodeProps) {
   const data = rawData as unknown as TextNodeData

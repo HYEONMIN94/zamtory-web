@@ -6,12 +6,7 @@
 import React, { useState, useRef } from 'react'
 import { Handle, Position, NodeProps } from '@xyflow/react'
 import { Modal, Input, Button } from '@zamtory/ui'
-
-interface ImageNodeData {
-  imageUrl?: string
-  caption?: string
-  onUpdate?: (updates: Record<string, unknown>) => void
-}
+import type { ImageNodeData } from '../../types/nodes'
 
 export function ImageNode({ data: rawData }: NodeProps) {
   const data = rawData as unknown as ImageNodeData
