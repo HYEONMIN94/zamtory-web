@@ -1,103 +1,203 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import { useCallback, useState, useEffect } from 'react'
+import {
+  ReactFlow,
+  MiniMap,
+  Controls,
+  Background,
+  useNodesState,
+  useEdgesState,
+  addEdge,
+  Connection,
+  Edge,
+  Node,
+  BackgroundVariant,
+} from '@xyflow/react'
+import '@xyflow/react/dist/style.css'
+import { Button } from '@zamtory/ui'
+import { TextNode, ChoiceNode, ImageNode } from '../components/nodes'
+
+const nodeTypes = {
+  textNode: TextNode,
+  choiceNode: ChoiceNode,
+  imageNode: ImageNode,
+}
+
+const initialNodes: Node[] = [
+  {
+    id: '1',
+    type: 'textNode',
+    position: { x: 250, y: 100 },
+    data: {
+      text: '스토리의 시작입니다.\n환영합니다!',
+      character: '내레이터',
+    },
+  },
+]
+
+const initialEdges: Edge[] = []
+
+export default function EditorPage() {
+  const containerStyles: React.CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100vh',
+    backgroundColor: '#f5f5f5',
+  }
+
+  const headerStyles: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '16px 24px',
+    backgroundColor: '#ffffff',
+    borderBottom: '1px solid #e5e7eb',
+  }
+
+  const mainStyles: React.CSSProperties = {
+    display: 'flex',
+    flex: 1,
+    overflow: 'hidden',
+  }
+
+  const sidebarStyles: React.CSSProperties = {
+    width: '280px',
+    backgroundColor: '#ffffff',
+    borderRight: '1px solid #e5e7eb',
+    padding: '24px',
+    overflowY: 'auto',
+  }
+
+  const editorAreaStyles: React.CSSProperties = {
+    flex: 1,
+    position: 'relative',
+  }
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
+  const [nodeId, setNodeId] = useState(2)
+
+  const onConnect = useCallback(
+    (params: Connection | Edge) => setEdges((eds) => addEdge(params, eds)),
+    [setEdges]
+  )
+
+  const updateNodeData = useCallback(
+    (nodeId: string, newData: Record<string, unknown>) => {
+      setNodes((nds) =>
+        nds.map((node) =>
+          node.id === nodeId ? { ...node, data: { ...node.data, ...newData } } : node
+        )
+      )
+    },
+    [setNodes]
+  )
+
+  // Add onUpdate callback to existing nodes on mount
+  useEffect(() => {
+    setNodes((nds) =>
+      nds.map((node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          onUpdate: (updates: Record<string, unknown>) => updateNodeData(node.id, updates),
+        },
+      }))
+    )
+  }, [updateNodeData, setNodes])
+
+  const addNode = (type: string) => {
+    const id = `${nodeId}`
+    const baseData =
+      type === 'textNode'
+        ? { text: '새 텍스트 노드', character: '캐릭터' }
+        : type === 'choiceNode'
+        ? { question: '질문을 입력하세요', choices: ['선택지 1', '선택지 2'] }
+        : { imageUrl: '', caption: '이미지 설명' }
+
+    const newNode: Node = {
+      id,
+      type,
+      position: { x: Math.random() * 500, y: Math.random() * 500 },
+      data: {
+        ...baseData,
+        onUpdate: (updates: Record<string, unknown>) => updateNodeData(id, updates),
+      },
+    }
+    setNodes((nds) => [...nds, newNode])
+    setNodeId((id) => id + 1)
+  }
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div style={containerStyles}>
+      {/* Header */}
+      <header style={headerStyles}>
+        <h1 style={{ fontSize: '20px', fontWeight: 600, color: '#111827' }}>
+          Zamtory Editor
+        </h1>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <Button variant="outline" size="md">
+            미리보기
+          </Button>
+          <Button variant="primary" size="md">
+            저장
+          </Button>
         </div>
+      </header>
+
+      {/* Main */}
+      <main style={mainStyles}>
+        {/* Sidebar */}
+        <aside style={sidebarStyles}>
+          <h2 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '16px' }}>
+            스토리 노드
+          </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <Button variant="outline" size="sm" fullWidth onClick={() => addNode('textNode')}>
+              💬 텍스트 노드
+            </Button>
+            <Button variant="outline" size="sm" fullWidth onClick={() => addNode('choiceNode')}>
+              🔀 선택지 노드
+            </Button>
+            <Button variant="outline" size="sm" fullWidth onClick={() => addNode('imageNode')}>
+              🖼️ 이미지 노드
+            </Button>
+          </div>
+
+          <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid #e5e7eb' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '12px' }}>
+              통계
+            </h3>
+            <div style={{ fontSize: '13px', color: '#6b7280', lineHeight: '1.8' }}>
+              <div>노드 수: {nodes.length}</div>
+              <div>연결 수: {edges.length}</div>
+            </div>
+          </div>
+        </aside>
+
+        {/* Editor Area */}
+        <section style={editorAreaStyles}>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            nodeTypes={nodeTypes}
+            nodeDragThreshold={10}
+            defaultEdgeOptions={{
+              animated: true,
+              style: { strokeWidth: 3 },
+            }}
+            fitView
+          >
+            <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
+            <Controls />
+            <MiniMap />
+          </ReactFlow>
+        </section>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
-  );
+  )
 }

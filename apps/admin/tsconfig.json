@@ -2,12 +2,31 @@
   "extends": "@zamtory/config/typescript/nextjs.json",
   "compilerOptions": {
     "paths": {
-      "@/*": ["./src/*"],
-      "@zamtory/ui": ["../../packages/ui/src"],
-      "@zamtory/types": ["../../packages/types/src"],
-      "@zamtory/utils": ["../../packages/utils/src"],
-      "@zamtory/api-client": ["../../packages/api-client/src"],
-      "@zamtory/webview-bridge": ["../../packages/webview-bridge/src"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@zamtory/ui": [
+        "../../packages/ui/src"
+      ],
+      "@zamtory/types": [
+        "../../packages/types/src"
+      ],
+      "@zamtory/utils": [
+        "../../packages/utils/src"
+      ],
+      "@zamtory/api-client": [
+        "../../packages/api-client/src"
+      ],
+      "@zamtory/webview-bridge": [
+        "../../packages/webview-bridge/src"
+      ]
     }
-  }
+  },
+  "include": [
+    "../../packages/config/typescript/next-env.d.ts",
+    "../../packages/config/typescript/**/*.ts",
+    "../../packages/config/typescript/**/*.tsx",
+    "../../packages/config/typescript/.next/types/**/*.ts",
+    ".next/types/**/*.ts"
+  ]
 }

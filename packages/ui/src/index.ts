@@ -1,7 +1,11 @@
 /**
- * @zamtory/ui - 공유 UI 컴포넌트
+ * @zamtory/ui - Zamtory UI Component Library
+ *
+ * 모든 UI 컴포넌트와 디자인 토큰을 export합니다.
  */
 
-export * from './components/Button'
-export * from './components/Input'
-export * from './components/Card'
+// Design Tokens
+export * from './tokens'
+
+// UI Components
+export * from './components'
