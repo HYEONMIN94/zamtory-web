@@ -154,13 +154,43 @@ export default function EditorPage() {
             스토리 노드
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <Button variant="outline" size="sm" fullWidth onClick={() => addNode('textNode')}>
+            <Button
+              variant="outline"
+              size="sm"
+              fullWidth
+              onClick={() => addNode('textNode')}
+              style={{
+                borderColor: '#0ea5e9',
+                color: '#0ea5e9',
+                backgroundColor: '#f0f9ff',
+              }}
+            >
               💬 텍스트 노드
             </Button>
-            <Button variant="outline" size="sm" fullWidth onClick={() => addNode('choiceNode')}>
+            <Button
+              variant="outline"
+              size="sm"
+              fullWidth
+              onClick={() => addNode('choiceNode')}
+              style={{
+                borderColor: '#d946ef',
+                color: '#d946ef',
+                backgroundColor: '#fdf4ff',
+              }}
+            >
               🔀 선택지 노드
             </Button>
-            <Button variant="outline" size="sm" fullWidth onClick={() => addNode('imageNode')}>
+            <Button
+              variant="outline"
+              size="sm"
+              fullWidth
+              onClick={() => addNode('imageNode')}
+              style={{
+                borderColor: '#10b981',
+                color: '#10b981',
+                backgroundColor: '#f0fdf4',
+              }}
+            >
               🖼️ 이미지 노드
             </Button>
           </div>
