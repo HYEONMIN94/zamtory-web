@@ -4,12 +4,16 @@ import { useState, type FormEvent } from 'react'
 import { Button } from '@zamtory/ui'
 import { useAuth } from '@/hooks/useAuth'
 import { isValidEmail, isValidPassword } from '@/lib/auth'
-import type { User } from '@zamtory/types'
 
 interface LoginFormProps {
-  onSuccess?: (user: User) => void
+  onSuccess?: () => void
   onError?: (error: Error) => void
-  redirectTo?: string
+}
+
+interface FormErrors {
+  email: string | null
+  password: string | null
+  general: string | null
 }
 
 export function LoginForm({ onSuccess, onError }: LoginFormProps) {
@@ -19,50 +23,60 @@ export function LoginForm({ onSuccess, onError }: LoginFormProps) {
   const [password, setPassword] = useState('')
   const [rememberMe, setRememberMe] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [errors, setErrors] = useState<FormErrors>({
+    email: null,
+    password: null,
+    general: null,
+  })
 
-  const [emailError, setEmailError] = useState<string | null>(null)
-  const [passwordError, setPasswordError] = useState<string | null>(null)
-
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setError(null)
-    setEmailError(null)
-    setPasswordError(null)
-
-    // 유효성 검증
-    let hasError = false
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {
+      email: null,
+      password: null,
+      general: null,
+    }
 
     if (!email) {
-      setEmailError('이메일을 입력해주세요.')
-      hasError = true
+      newErrors.email = '이메일을 입력해주세요.'
     } else if (!isValidEmail(email)) {
-      setEmailError('유효한 이메일 주소를 입력해주세요.')
-      hasError = true
+      newErrors.email = '유효한 이메일 주소를 입력해주세요.'
     }
 
     if (!password) {
-      setPasswordError('비밀번호를 입력해주세요.')
-      hasError = true
+      newErrors.password = '비밀번호를 입력해주세요.'
     } else if (!isValidPassword(password)) {
-      setPasswordError('비밀번호는 최소 8자 이상이어야 합니다.')
-      hasError = true
+      newErrors.password = '비밀번호는 최소 8자 이상이어야 합니다.'
     }
 
-    if (hasError) return
+    setErrors(newErrors)
+    return !newErrors.email && !newErrors.password
+  }
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+
+    if (!validateForm()) {
+      return
+    }
 
     try {
       setIsLoading(true)
       await login({ email, password, rememberMe })
-      onSuccess?.({ id: '', email, username: '', createdAt: '', updatedAt: '' })
+      onSuccess?.()
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '로그인에 실패했습니다.'
-      setError(errorMessage)
+      setErrors((prev) => ({ ...prev, general: errorMessage }))
       onError?.(err instanceof Error ? err : new Error(errorMessage))
     } finally {
       setIsLoading(false)
     }
   }
+
+  const inputClassName = (hasError: boolean) =>
+    `w-full px-3 py-2 border rounded-md shadow-sm
+     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+     disabled:bg-gray-100 disabled:cursor-not-allowed
+     ${hasError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'}`
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -77,16 +91,11 @@ export function LoginForm({ onSuccess, onError }: LoginFormProps) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           disabled={isLoading}
-          className={`
-            w-full px-3 py-2 border rounded-md shadow-sm
-            focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
-            disabled:bg-gray-100 disabled:cursor-not-allowed
-            ${emailError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'}
-          `}
+          className={inputClassName(!!errors.email)}
           placeholder="your@email.com"
           autoComplete="email"
         />
-        {emailError && <p className="mt-1 text-sm text-red-600">{emailError}</p>}
+        {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
       </div>
 
       {/* 비밀번호 입력 */}
@@ -100,16 +109,11 @@ export function LoginForm({ onSuccess, onError }: LoginFormProps) {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           disabled={isLoading}
-          className={`
-            w-full px-3 py-2 border rounded-md shadow-sm
-            focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
-            disabled:bg-gray-100 disabled:cursor-not-allowed
-            ${passwordError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'}
-          `}
+          className={inputClassName(!!errors.password)}
           placeholder="••••••••"
           autoComplete="current-password"
         />
-        {passwordError && <p className="mt-1 text-sm text-red-600">{passwordError}</p>}
+        {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
       </div>
 
       {/* 로그인 유지 */}
@@ -120,7 +124,7 @@ export function LoginForm({ onSuccess, onError }: LoginFormProps) {
           checked={rememberMe}
           onChange={(e) => setRememberMe(e.target.checked)}
           disabled={isLoading}
-          className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
         />
         <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700">
           로그인 유지
@@ -128,9 +132,9 @@ export function LoginForm({ onSuccess, onError }: LoginFormProps) {
       </div>
 
       {/* 에러 메시지 */}
-      {error && (
+      {errors.general && (
         <div className="p-3 rounded-md bg-red-50 border border-red-200">
-          <p className="text-sm text-red-600">{error}</p>
+          <p className="text-sm text-red-600">{errors.general}</p>
         </div>
       )}
 
@@ -141,11 +145,11 @@ export function LoginForm({ onSuccess, onError }: LoginFormProps) {
 
       {/* 추가 링크 */}
       <div className="flex justify-center items-center gap-4 text-sm text-gray-600">
-        <button type="button" className="hover:text-primary-600 transition-colors">
+        <button type="button" className="hover:text-blue-600 transition-colors">
           비밀번호 찾기
         </button>
         <span className="text-gray-300">|</span>
-        <button type="button" className="hover:text-primary-600 transition-colors">
+        <button type="button" className="hover:text-blue-600 transition-colors">
           회원가입
         </button>
       </div>

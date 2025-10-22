@@ -1,12 +1,12 @@
 'use client'
 
-import { createContext, useCallback, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
-import { createApiClient } from '@zamtory/api-client'
+import { createApiClient, type ApiClient } from '@zamtory/api-client'
 import type { User, LoginCredentials, LoginResponse } from '@zamtory/types'
 import { saveTokens, getAccessToken, getRefreshToken, clearTokens, saveUser, getUser } from '@/lib/auth'
 
-interface AuthContextValue {
+export interface AuthContextValue {
   user: User | null
   isAuthenticated: boolean
   isLoading: boolean
@@ -21,15 +21,43 @@ interface AuthProviderProps {
   children: ReactNode
 }
 
+const TOKEN_REFRESH_INTERVAL = 5 * 60 * 1000 // 5분
+
 export function AuthProvider({ children }: AuthProviderProps) {
   const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  // API 클라이언트 초기화
-  const apiClient = createApiClient({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api',
-  })
+  // API 클라이언트를 useMemo로 메모이제이션
+  const apiClient = useMemo<ApiClient>(
+    () =>
+      createApiClient({
+        baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api',
+      }),
+    []
+  )
+
+  /**
+   * 토큰 갱신 (내부 함수)
+   */
+  const refreshTokenInternal = useCallback(async () => {
+    const refreshToken = getRefreshToken()
+    if (!refreshToken) {
+      throw new Error('No refresh token')
+    }
+
+    const response = await apiClient.post<{ accessToken: string; expiresIn: number }>('/auth/refresh', {
+      refreshToken,
+    })
+
+    saveTokens(response.accessToken, refreshToken, true)
+    apiClient.setAccessToken(response.accessToken)
+
+    // 사용자 정보 재조회
+    const userResponse = await apiClient.get<{ user: User }>('/auth/me')
+    setUser(userResponse.user)
+    saveUser(userResponse.user, true)
+  }, [apiClient])
 
   /**
    * 초기 인증 상태 확인
@@ -43,7 +71,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         apiClient.setAccessToken(accessToken)
         setUser(storedUser)
       } else if (getRefreshToken()) {
-        // Refresh token이 있으면 토큰 갱신 시도
         await refreshTokenInternal()
       }
     } catch (error) {
@@ -52,31 +79,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [apiClient, refreshTokenInternal])
 
   /**
    * 로그인
    */
-  const login = useCallback(async (credentials: LoginCredentials) => {
-    try {
-      setIsLoading(true)
+  const login = useCallback(
+    async (credentials: LoginCredentials) => {
+      try {
+        setIsLoading(true)
 
-      const response = await apiClient.post<LoginResponse>('/auth/login', credentials)
+        const response = await apiClient.post<LoginResponse>('/auth/login', credentials)
 
-      // 토큰 및 사용자 정보 저장
-      saveTokens(response.accessToken, response.refreshToken, credentials.rememberMe)
-      saveUser(response.user, credentials.rememberMe)
-      apiClient.setAccessToken(response.accessToken)
+        // 토큰 및 사용자 정보 저장
+        saveTokens(response.accessToken, response.refreshToken, credentials.rememberMe)
+        saveUser(response.user, credentials.rememberMe)
+        apiClient.setAccessToken(response.accessToken)
 
-      setUser(response.user)
-      router.push('/')
-    } catch (error) {
-      console.error('Login failed:', error)
-      throw error
-    } finally {
-      setIsLoading(false)
-    }
-  }, [router])
+        setUser(response.user)
+        router.push('/')
+      } catch (error) {
+        console.error('Login failed:', error)
+        throw error
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [apiClient, router]
+  )
 
   /**
    * 로그아웃
@@ -92,36 +122,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       apiClient.setAccessToken(null)
       router.push('/login')
     }
-  }, [router])
-
-  /**
-   * 토큰 갱신 (내부 함수)
-   */
-  const refreshTokenInternal = useCallback(async () => {
-    try {
-      const refreshToken = getRefreshToken()
-      if (!refreshToken) {
-        throw new Error('No refresh token')
-      }
-
-      const response = await apiClient.post<{ accessToken: string; expiresIn: number }>('/auth/refresh', {
-        refreshToken,
-      })
-
-      saveTokens(response.accessToken, refreshToken, true)
-      apiClient.setAccessToken(response.accessToken)
-
-      // 사용자 정보 재조회
-      const userResponse = await apiClient.get<{ user: User }>('/auth/me')
-      setUser(userResponse.user)
-      saveUser(userResponse.user, true)
-    } catch (error) {
-      console.error('Token refresh failed:', error)
-      clearTokens()
-      setUser(null)
-      throw error
-    }
-  }, [])
+  }, [apiClient, router])
 
   /**
    * 토큰 갱신 (외부 호출용)
@@ -138,7 +139,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [checkAuth])
 
   /**
-   * 자동 토큰 갱신 (5분마다)
+   * 자동 토큰 갱신
    */
   useEffect(() => {
     if (!user) return
@@ -147,19 +148,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
       refreshTokenInternal().catch((error) => {
         console.error('Auto refresh failed:', error)
       })
-    }, 5 * 60 * 1000) // 5분
+    }, TOKEN_REFRESH_INTERVAL)
 
     return () => clearInterval(interval)
   }, [user, refreshTokenInternal])
 
-  const value: AuthContextValue = {
-    user,
-    isAuthenticated: !!user,
-    isLoading,
-    login,
-    logout,
-    refreshToken,
-  }
+  const value: AuthContextValue = useMemo(
+    () => ({
+      user,
+      isAuthenticated: !!user,
+      isLoading,
+      login,
+      logout,
+      refreshToken,
+    }),
+    [user, isLoading, login, logout, refreshToken]
+  )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

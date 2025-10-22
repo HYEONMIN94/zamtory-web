@@ -1,13 +1,13 @@
 'use client'
 
 import { useContext } from 'react'
-import { AuthContext } from '@/contexts/AuthContext'
+import { AuthContext, type AuthContextValue } from '@/contexts/AuthContext'
 
 /**
  * 인증 훅
  * AuthContext를 사용하기 위한 커스텀 훅
  */
-export function useAuth() {
+export function useAuth(): AuthContextValue {
   const context = useContext(AuthContext)
 
   if (context === undefined) {
