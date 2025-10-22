@@ -89,15 +89,42 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         setIsLoading(true)
 
-        const response = await apiClient.post<LoginResponse>('/auth/login', credentials)
+        // Mock 로그인 (서버 연결 전까지 사용)
+        // TODO: 백엔드 API 연동 시 아래 코드로 교체
+        const mockUser: User = {
+          id: 'mock-user-1',
+          email: credentials.email,
+          username: credentials.email.split('@')[0],
+          displayName: credentials.email.split('@')[0],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
+
+        const mockTokens = {
+          accessToken: 'mock-access-token',
+          refreshToken: 'mock-refresh-token',
+        }
 
         // 토큰 및 사용자 정보 저장
+        saveTokens(mockTokens.accessToken, mockTokens.refreshToken, credentials.rememberMe)
+        saveUser(mockUser, credentials.rememberMe)
+        apiClient.setAccessToken(mockTokens.accessToken)
+
+        setUser(mockUser)
+
+        // 약간의 지연으로 실제 로그인처럼 보이게
+        await new Promise((resolve) => setTimeout(resolve, 500))
+
+        router.push('/editor')
+
+        /* 실제 API 연동 시 사용할 코드:
+        const response = await apiClient.post<LoginResponse>('/auth/login', credentials)
         saveTokens(response.accessToken, response.refreshToken, credentials.rememberMe)
         saveUser(response.user, credentials.rememberMe)
         apiClient.setAccessToken(response.accessToken)
-
         setUser(response.user)
-        router.push('/')
+        router.push('/editor')
+        */
       } catch (error) {
         console.error('Login failed:', error)
         throw error
