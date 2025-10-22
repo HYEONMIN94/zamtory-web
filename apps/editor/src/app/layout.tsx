@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { AuthProvider } from '@/contexts/AuthContext'
 
 export const metadata: Metadata = {
   title: 'Zamtory Editor - AI 인터랙티브 스토리 에디터',
@@ -22,7 +23,7 @@ export default function RootLayout({
         />
       </head>
       <body style={{ margin: 0, fontFamily: 'Pretendard Variable, -apple-system, sans-serif' }}>
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   )

@@ -50,3 +50,6 @@ next-env.d.ts
 # AI Development
 CLAUDE.md
 DESIGN.md
+
+# Claude 설계 문서
+claudedocs/
