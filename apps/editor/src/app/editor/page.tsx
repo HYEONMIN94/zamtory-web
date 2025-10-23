@@ -18,6 +18,8 @@ import {
 import '@xyflow/react/dist/style.css'
 import { Button } from '@zamtory/ui'
 import { TextNode, ChoiceNode, ImageNode } from '../../components/nodes'
+import { EDITOR_STYLES, NODE_TYPE_CONFIGS, INITIAL_NODE_ID } from './constants'
+import type { NodeTypeKey } from './types'
 
 const nodeTypes = {
   textNode: TextNode,
@@ -40,44 +42,9 @@ const initialNodes: Node[] = [
 const initialEdges: Edge[] = []
 
 export default function EditorPage() {
-  const containerStyles: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    height: '100vh',
-    backgroundColor: '#f5f5f5',
-  }
-
-  const headerStyles: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '16px 24px',
-    backgroundColor: '#ffffff',
-    borderBottom: '1px solid #e5e7eb',
-  }
-
-  const mainStyles: React.CSSProperties = {
-    display: 'flex',
-    flex: 1,
-    overflow: 'hidden',
-  }
-
-  const sidebarStyles: React.CSSProperties = {
-    width: '280px',
-    backgroundColor: '#ffffff',
-    borderRight: '1px solid #e5e7eb',
-    padding: '24px',
-    overflowY: 'auto',
-  }
-
-  const editorAreaStyles: React.CSSProperties = {
-    flex: 1,
-    position: 'relative',
-  }
-
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
-  const [nodeId, setNodeId] = useState(2)
+  const [nodeId, setNodeId] = useState(INITIAL_NODE_ID)
 
   const onConnect = useCallback(
     (params: Connection | Edge) => setEdges((eds) => addEdge(params, eds)),
@@ -103,7 +70,10 @@ export default function EditorPage() {
     [setNodes]
   )
 
-  // Add onUpdate callback to existing nodes on mount
+  /**
+   * Initialize existing nodes with onUpdate callback on component mount.
+   * This effect runs only once because updateNodeData is stable (depends only on setNodes).
+   */
   useEffect(() => {
     setNodes((nds) =>
       nds.map((node) => ({
@@ -114,23 +84,18 @@ export default function EditorPage() {
         },
       }))
     )
-  }, [updateNodeData])
+  }, [updateNodeData, setNodes])
 
-  const addNode = (type: string) => {
+  const addNode = (type: NodeTypeKey) => {
     const id = `${nodeId}`
-    const baseData =
-      type === 'textNode'
-        ? { text: '새 텍스트 노드', character: '캐릭터' }
-        : type === 'choiceNode'
-        ? { question: '질문을 입력하세요', choices: ['선택지 1', '선택지 2'] }
-        : { imageUrl: '', caption: '이미지 설명' }
+    const config = NODE_TYPE_CONFIGS[type]
 
     const newNode: Node = {
       id,
       type,
       position: { x: Math.random() * 500, y: Math.random() * 500 },
       data: {
-        ...baseData,
+        ...config.defaultData,
         onUpdate: (updates: Record<string, unknown>) => updateNodeData(id, updates),
       },
     }
@@ -139,9 +104,9 @@ export default function EditorPage() {
   }
 
   return (
-    <div style={containerStyles}>
+    <div style={EDITOR_STYLES.container}>
       {/* Header */}
-      <header style={headerStyles}>
+      <header style={EDITOR_STYLES.header}>
         <h1 style={{ fontSize: '20px', fontWeight: 600, color: '#111827' }}>
           Zamtory Editor
         </h1>
@@ -156,52 +121,31 @@ export default function EditorPage() {
       </header>
 
       {/* Main */}
-      <main style={mainStyles}>
+      <main style={EDITOR_STYLES.main}>
         {/* Sidebar */}
-        <aside style={sidebarStyles}>
+        <aside style={EDITOR_STYLES.sidebar}>
           <h2 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '16px' }}>
             스토리 노드
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <Button
-              variant="outline"
-              size="sm"
-              fullWidth
-              onClick={() => addNode('textNode')}
-              style={{
-                borderColor: '#0ea5e9',
-                color: '#0ea5e9',
-                backgroundColor: '#f0f9ff',
-              }}
-            >
-              💬 텍스트 노드
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              fullWidth
-              onClick={() => addNode('choiceNode')}
-              style={{
-                borderColor: '#d946ef',
-                color: '#d946ef',
-                backgroundColor: '#fdf4ff',
-              }}
-            >
-              🔀 선택지 노드
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              fullWidth
-              onClick={() => addNode('imageNode')}
-              style={{
-                borderColor: '#10b981',
-                color: '#10b981',
-                backgroundColor: '#f0fdf4',
-              }}
-            >
-              🖼️ 이미지 노드
-            </Button>
+            {(Object.entries(NODE_TYPE_CONFIGS) as [NodeTypeKey, typeof NODE_TYPE_CONFIGS[NodeTypeKey]][]).map(
+              ([nodeType, config]) => (
+                <Button
+                  key={nodeType}
+                  variant="outline"
+                  size="sm"
+                  fullWidth
+                  onClick={() => addNode(nodeType)}
+                  style={{
+                    borderColor: config.borderColor,
+                    color: config.textColor,
+                    backgroundColor: config.backgroundColor,
+                  }}
+                >
+                  {config.label}
+                </Button>
+              )
+            )}
           </div>
 
           <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid #e5e7eb' }}>
@@ -216,7 +160,7 @@ export default function EditorPage() {
         </aside>
 
         {/* Editor Area */}
-        <section style={editorAreaStyles}>
+        <section style={EDITOR_STYLES.editorArea}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
