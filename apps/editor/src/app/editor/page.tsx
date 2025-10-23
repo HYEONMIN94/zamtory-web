@@ -13,6 +13,7 @@ import {
   Edge,
   Node,
   BackgroundVariant,
+  SelectionMode,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { Button } from '@zamtory/ui'
@@ -81,6 +82,14 @@ export default function EditorPage() {
   const onConnect = useCallback(
     (params: Connection | Edge) => setEdges((eds) => addEdge(params, eds)),
     [setEdges]
+  )
+
+  const onSelectionChange = useCallback(
+    ({ nodes: selectedNodes, edges: selectedEdges }: { nodes: Node[]; edges: Edge[] }) => {
+      console.log('Selected nodes:', selectedNodes.length)
+      console.log('Selected edges:', selectedEdges.length)
+    },
+    []
   )
 
   const updateNodeData = useCallback(
@@ -221,6 +230,14 @@ export default function EditorPage() {
               style: { strokeWidth: 3 },
             }}
             fitView
+            // 다중 선택 기능
+            selectionOnDrag={true}
+            panOnDrag={[1, 2]}
+            selectionMode={SelectionMode.Partial}
+            multiSelectionKeyCode="Shift"
+            deleteKeyCode="Delete"
+            selectNodesOnDrag={true}
+            onSelectionChange={onSelectionChange}
           >
             <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
             <Controls />
